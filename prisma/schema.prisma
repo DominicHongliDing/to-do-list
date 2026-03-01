@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum NotificationType {
+  DUE_SOON
+  OVERDUE
+}
+
+enum NotificationStatus {
+  SUCCESS
+  FAILED
+}
+
+model Task {
+  id                      Int               @id @default(autoincrement())
+  title                   String
+  description             String?
+  dueDate                 DateTime
+  isDone                  Boolean           @default(false)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  lastDueSoonNotifiedAt   DateTime?
+  lastOverdueNotifiedAt   DateTime?
+  notificationLogs        NotificationLog[]
+
+  @@index([dueDate])
+  @@index([isDone, dueDate])
+}
+
+model NotificationLog {
+  id           Int                @id @default(autoincrement())
+  taskId       Int
+  type         NotificationType
+  sentAt       DateTime           @default(now())
+  status       NotificationStatus
+  errorMessage String?
+  task         Task               @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, type])
+  @@index([sentAt])
+}
